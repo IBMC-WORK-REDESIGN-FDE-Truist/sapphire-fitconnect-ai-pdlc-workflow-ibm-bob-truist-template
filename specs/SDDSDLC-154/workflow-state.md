@@ -7,7 +7,7 @@
 - Last Updated: 2026-08-20
 
 ## CURRENT_STAGE
-PHASE_4B_PENDING
+PHASE_6_PENDING
 
 ## Completed Phases
 - [x] Phase 1: Constitution Verified
@@ -21,8 +21,8 @@ PHASE_4B_PENDING
 - [x] Phase 4: Plan
 - [x] CHECKPOINT 2A: Submitter Plan Review
 - [x] Phase 4A: Plan PR Raised
-- [ ] Phase 4B: Plan Approved
-- [ ] Phase 5: Child Stories Created
+- [x] Phase 4B: Plan Approved
+- [x] Phase 5: Child Stories Created
 - [ ] Phase 6A: Tasks Entry Gates
 - [ ] Phase 6B: Tasks
 - [ ] CHECKPOINT 2B: Submitter Tasks Review
@@ -44,13 +44,16 @@ PHASE_4B_PENDING
 - Spec PR: https://github.com/IBMC-WORK-REDESIGN-FDE-Truist/sapphire-fitconnect-ai-pdlc-workflow-ibm-bob-truist-template/pull/1
 - Spec Approval (`product_owner`): MERGED by tapamiti-hub on 2026-08-25
 - Plan PR: https://github.com/IBMC-WORK-REDESIGN-FDE-Truist/sapphire-fitconnect-ai-pdlc-workflow-ibm-bob-truist-template/pull/2
-- Plan Approval (`fde`): (pending)
+- Plan Approval (`fde`): MERGED by tapamiti-hub on 2026-08-25
 - Tasks PR: (not yet raised)
 - Tasks Approval (`fde`): (pending)
 - Implementation PRs: (pending)
 
 ## Child Stories
-(populated in Phase 5 — one `<repo>: <child-key>` per affected repo)
+sapphire-health-service: SDDSDLC-166
+sapphire-charting-api: SDDSDLC-167
+sapphire-bff-api: SDDSDLC-168
+sapphire-ui: SDDSDLC-169
 
 ## Affected Repos
 sapphire-health-service, sapphire-charting-api, sapphire-bff-api, sapphire-ui
