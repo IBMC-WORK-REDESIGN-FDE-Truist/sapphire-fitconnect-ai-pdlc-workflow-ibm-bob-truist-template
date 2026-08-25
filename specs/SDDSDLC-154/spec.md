@@ -69,7 +69,6 @@ A user wants to share their temperature history with their healthcare provider. 
 ### Edge Cases
 
 - What happens when a device submits a temperature reading with a timestamp in the future (clock drift)?
-- How does the system handle duplicate records (same user, device, timestamp, and value submitted twice)?
 - What if the unit field is missing or contains an unrecognised value — is a default unit assumed, or is the record rejected?
 - What happens when a user has thousands of temperature records and selects the "Month" view — are rollup aggregates pre-computed or computed on demand?
 - How are temperature readings handled when a user's account is deactivated mid-batch ingestion?
@@ -85,8 +84,10 @@ A user wants to share their temperature history with their healthcare provider. 
 **Ingestion**
 
 - **FR-001**: The system MUST accept body temperature readings submitted individually (one record per request) and in batches (multiple records per request, up to a configurable maximum batch size).
+- **FR-001a**: Ingestion MUST be idempotent on the combination of `(user, device_source, timestamp)`. If a record with the same user, device source, and timestamp already exists, the submission MUST be accepted and return a success response without creating a duplicate record (silent upsert).
+- **FR-001b**: The ingestion endpoint MUST enforce a rate limit of **10 requests per minute per device**. Requests exceeding this limit MUST be rejected with a 429 Too Many Requests response; no partial records from a rate-limited request MUST be persisted.
 - **FR-002**: The system MUST accept temperature values expressed in Celsius or Fahrenheit and store the unit alongside the value.
-- **FR-003**: The system MUST validate each submitted temperature value against a configurable physiological range (minimum and maximum thresholds). Records outside this range MUST be rejected with a structured error response identifying the invalid value and the acceptable range.
+- **FR-003**: The system MUST validate each submitted temperature value against a configurable physiological range (minimum and maximum thresholds). The default range is **30–43 °C (86–109.4 °F)**. Records outside this range MUST be rejected with a structured error response identifying the invalid value and the acceptable range.
 - **FR-004**: Each temperature record MUST be associated with: the authenticated user, the submission timestamp (ISO-8601 UTC), the source device identifier, and the ingestion source (device-push or API).
 - **FR-005**: If a measurement method is provided in the submission (e.g., oral, axillary, tympanic), the system MUST store it alongside the record. If absent, the field MUST be stored as null.
 - **FR-006**: For batch submissions containing a mix of valid and invalid records, the system MUST store all valid records and return a response listing each rejected record with its reason; the request MUST NOT be treated as all-or-nothing.
@@ -120,6 +121,13 @@ A user wants to share their temperature history with their healthcare provider. 
 - **FR-022**: The temperature chart MUST display an empty-state message when no records exist for the user, and an error state with a retry action when a data fetch fails; stack traces and internal error codes MUST NOT be shown to users.
 - **FR-023**: All chart colours and design tokens used for the temperature metric MUST follow the shared design token system and the sapphire-charting-api colour palette for health metric categories.
 
+**Observability**
+
+- **FR-024**: All services involved in this feature (ingestion, reporting, BFF, UI) MUST emit distributed traces for every inbound request and outbound call introduced by this feature, using the platform-standard OpenTelemetry instrumentation, exporting to the shared OTEL Collector.
+- **FR-025**: The ingestion service MUST emit a business-level counter tracking the number of temperature records accepted and rejected per ingestion request, labelled by outcome (accepted, rejected-out-of-range, rejected-invalid-unit, rejected-rate-limited, deduplicated).
+- **FR-026**: The reporting service MUST emit a business-level counter tracking the number of temperature trend queries served, labelled by time range (day, week, month).
+- **FR-027**: All new log output produced by this feature MUST be structured JSON and MUST NOT include temperature values or any other health data fields in log records, consistent with the platform constitution's PII/health-data logging rule.
+
 ### Key Entities
 
 - **TemperatureRecord**: A single body temperature measurement. Key attributes: user identifier, value (numeric), unit (Celsius or Fahrenheit), timestamp (UTC), device source identifier, ingestion source, measurement method (nullable). Relates to: User, Device.
@@ -133,7 +141,7 @@ A user wants to share their temperature history with their healthcare provider. 
 ### Measurable Outcomes
 
 - **SC-001**: Users can view their body temperature history and trend charts within 3 seconds of navigating to the temperature metric section, under normal network conditions.
-- **SC-002**: The system successfully ingests 100% of valid single and batch temperature submissions without data loss or misattribution.
+- **SC-002**: The system successfully ingests 100% of valid single and batch temperature submissions within the defined rate limit (10 requests/minute per device) without data loss or misattribution.
 - **SC-003**: Invalid temperature values (out-of-range, missing required fields, unrecognised unit) are rejected 100% of the time with a structured error response; no invalid record is persisted.
 - **SC-004**: Temperature trend data (min, max, average) is available for the Day, Week, and Month ranges for any user who has at least one stored record.
 - **SC-005**: All temperature data exported via the analytics export endpoint matches the stored records for the requested date range and filters, with zero discrepancy.
@@ -143,15 +151,28 @@ A user wants to share their temperature history with their healthcare provider. 
 
 ---
 
+## Clarifications
+
+### Session 2026-08-20
+
+- Q: How does the system handle duplicate records (same user, device, timestamp, and value submitted twice)? → A: Idempotent upsert — deduplicate silently on `(user, device_source, timestamp)`; return success without creating a duplicate.
+- Q: What are the default physiological validation thresholds for temperature? → A: 30–43 °C / 86–109.4 °F (clinically grounded survivable bounds; configurable).
+- Q: What is the ingestion rate limit per device? → A: 10 requests/minute per device; excess requests rejected with 429.
+- Q: What is the compliance posture for body temperature health data? → A: Deferred — compliance obligations (encryption at rest, audit logging, retention schedules, HIPAA/GDPR) are out of scope for this story and will be addressed in a dedicated security/compliance story.
+- Q: What observability requirements apply to this feature? → A: Platform-standard OTEL for all affected services — ingestion, reporting, BFF, and UI each emit spans, business-level counters, and structured logs per the constitution; temperature values MUST NOT appear in log fields.
+
+---
+
 ## Assumptions
 
 - The platform already has a concept of "metric type" in the health metrics catalog; body temperature is additive and does not require redesigning the existing schema.
 - Existing smart-device ingestion infrastructure (auth, routing, device registration) is already in place; this story adds a new metric type to it rather than building new ingestion infrastructure from scratch.
 - Temperature unit preference (Celsius vs Fahrenheit) is either already stored as a user preference or can be toggled per-session on the chart; if a global user preference exists it will be respected as the default.
-- The physiological validation range (configurable minimum and maximum) will be defined by the product/clinical team before implementation; a reasonable default (e.g., 30–45 °C / 86–113 °F) will be used until confirmed.
+- The physiological validation range default is **30–43 °C / 86–109.4 °F**, consistent with published clinical survivable limits. The product/clinical team may override this via configuration before or after release.
 - Downstream analytics pipelines consume a documented event/schema contract; schema changes will be coordinated with pipeline owners and documented before merge.
 - The `sapphire-charting-api` already provides a charting component abstraction and colour palette for health metrics; the temperature chart will be built as a new instance of that abstraction, not a bespoke implementation.
 - Batch ingestion maximum size is configurable server-side; a default of 100 records per batch is assumed unless stated otherwise.
 - All timestamps submitted by devices will be in ISO-8601 UTC format; devices are expected to normalise their local time before submission.
 - The BFF (GraphQL layer) will expose new queries/mutations for temperature data; breaking changes to existing GraphQL schema are not permitted — only additive changes.
 - Rollup aggregates (daily, weekly, monthly) will be computed asynchronously or on a scheduled basis, not synchronously during ingestion, to avoid latency impact on device submissions.
+- Compliance obligations for body temperature as health data (encryption at rest, audit logging, data subject rights, retention schedules) are explicitly out of scope for this story; they will be addressed in a dedicated security/compliance story. Body temperature data MUST NOT appear in log fields, consistent with the platform constitution's PII/health-data logging rule.
