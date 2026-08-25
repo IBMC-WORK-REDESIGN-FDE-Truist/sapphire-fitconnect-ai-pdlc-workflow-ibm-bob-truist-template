@@ -4,10 +4,10 @@
 - Story ID: SDDSDLC-154
 - Story Title: Add Support for Body Temperature Metric Ingestion, Storage, and Reporting
 - Started: 2026-08-20
-- Last Updated: 2026-08-25
+- Last Updated: 2026-08-20
 
 ## CURRENT_STAGE
-PHASE_3C_PENDING
+CHECKPOINT_2A_PENDING
 
 ## Completed Phases
 - [x] Phase 1: Constitution Verified
@@ -17,8 +17,8 @@ PHASE_3C_PENDING
 - [x] CHECKPOINT 2: Submitter Review
 - [x] Phase 3A: Spec PR Raised
 - [x] Phase 3B: Spec PR Approved
-- [ ] Phase 3C: Plan Entry Gates
-- [ ] Phase 4: Plan
+- [x] Phase 3C: Plan Entry Gates
+- [x] Phase 4: Plan
 - [ ] CHECKPOINT 2A: Submitter Plan Review
 - [ ] Phase 4A: Plan PR Raised
 - [ ] Phase 4B: Plan Approved
