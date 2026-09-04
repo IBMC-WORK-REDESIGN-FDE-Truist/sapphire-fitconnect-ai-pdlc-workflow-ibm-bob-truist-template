@@ -1,0 +1,37 @@
+# docker-compose OTEL environment variable additions for SDDSDLC-154
+# Add the following env vars to each service's `environment:` block in docker-compose.yml
+#
+# These blocks show the additive snippet for each service.
+# Merge into the existing docker-compose.yml in each repo.
+
+# --- sapphire-health-service ---
+# services:
+#   sapphire-health-service:
+#     environment:
+#       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+#       OTEL_SERVICE_NAME: sapphire-health-service
+#       OTEL_DEPLOYMENT_ENVIRONMENT: ${ENVIRONMENT:-local}
+
+# --- sapphire-charting-api ---
+# services:
+#   sapphire-charting-api:
+#     environment:
+#       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+#       OTEL_SERVICE_NAME: sapphire-charting-api
+#       OTEL_DEPLOYMENT_ENVIRONMENT: ${ENVIRONMENT:-local}
+
+# --- sapphire-bff-api ---
+# services:
+#   sapphire-bff-api:
+#     environment:
+#       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+#       OTEL_SERVICE_NAME: sapphire-bff-api
+#       OTEL_DEPLOYMENT_ENVIRONMENT: ${ENVIRONMENT:-local}
+
+# --- sapphire-ui ---
+# services:
+#   sapphire-ui:
+#     environment:
+#       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+#       OTEL_SERVICE_NAME: sapphire-ui
+#       OTEL_DEPLOYMENT_ENVIRONMENT: ${ENVIRONMENT:-local}
