@@ -1,0 +1,110 @@
+# GraphQL Schema Extension — Body Temperature (SDDSDLC-154)
+# File: sapphire-bff-api/src/schema/temperature.graphql
+# Extends existing Query and Mutation types additively — no breaking changes.
+
+# ── Scalars and Enums ────────────────────────────────────────────────────────
+
+enum TemperatureUnit {
+  CELSIUS
+  FAHRENHEIT
+}
+
+enum TemperatureRange {
+  DAY
+  WEEK
+  MONTH
+}
+
+enum IngestionSource {
+  DEVICE
+  API
+}
+
+# ── Domain Types ─────────────────────────────────────────────────────────────
+
+type TemperatureRecord {
+  id: ID!
+  userId: ID!
+  deviceSourceId: String!
+  recordedAt: String!
+  ingestedAt: String!
+  value: Float!
+  unit: TemperatureUnit!
+  ingestionSource: IngestionSource!
+  measurementMethod: String
+}
+
+type TemperatureDataPoint {
+  periodStart: String!
+  periodEnd: String!
+  minCelsius: Float!
+  maxCelsius: Float!
+  avgCelsius: Float!
+  recordCount: Int!
+}
+
+type TemperatureTrendPayload {
+  userId: ID!
+  range: TemperatureRange!
+  from: String!
+  to: String!
+  dataPoints: [TemperatureDataPoint!]!
+}
+
+# ── Input Types ───────────────────────────────────────────────────────────────
+
+input TemperatureReadingInput {
+  deviceSourceId: String!
+  recordedAt: String!
+  value: Float!
+  unit: TemperatureUnit!
+  ingestionSource: IngestionSource!
+  measurementMethod: String
+}
+
+input BatchTemperatureReadingInput {
+  readings: [TemperatureReadingInput!]!
+}
+
+# ── Mutation Payloads ─────────────────────────────────────────────────────────
+
+type IngestTemperaturePayload {
+  accepted: Int!
+  rejected: Int!
+  errors: [IngestionErrorPayload!]!
+}
+
+type IngestionErrorPayload {
+  index: Int!
+  code: String!
+  message: String!
+}
+
+# ── Query and Mutation Extensions ─────────────────────────────────────────────
+
+extend type Query {
+  """
+  Returns aggregated temperature trend data for the authenticated user.
+  Returns an empty dataPoints list when no rollup data exists for the requested window.
+  """
+  temperatureTrend(
+    range: TemperatureRange!
+    deviceSourceId: String
+    from: String
+    to: String
+  ): TemperatureTrendPayload!
+}
+
+extend type Mutation {
+  """
+  Ingests a single body temperature reading for the authenticated user.
+  Returns 422-equivalent errors in errors[] for out-of-range values.
+  """
+  ingestTemperature(input: TemperatureReadingInput!): IngestTemperaturePayload!
+
+  """
+  Ingests a batch of up to 100 body temperature readings.
+  Returns per-reading errors for rejected entries (partial success supported).
+  """
+  ingestTemperatureBatch(input: BatchTemperatureReadingInput!): IngestTemperaturePayload!
+}

@@ -12,11 +12,11 @@
 
 **Purpose**: DB migrations, shared config, and OTEL env vars — one-time cross-cutting setup before any story work begins.
 
-- [ ] T001 Add `temperature_records` table migration in `sapphire-health-service/src/main/resources/db/migration/V<next>__create_temperature_records.sql` with all fields, unique constraint `(user_id, device_source_id, recorded_at)`, and indexes `idx_temperature_records_user_time`, `idx_temperature_records_device`
-- [ ] T002 Add `temperature_rollups` table migration in `sapphire-charting-api/src/main/resources/db/migration/V<next>__create_temperature_rollups.sql` with all fields and unique constraint `(user_id, period_type, period_start)`
-- [ ] T003 [P] Add `BODY_TEMPERATURE` entry to the metric type catalog/enum in `sapphire-health-service` (location matching existing `BloodPressure`/`SpO2` enum definition)
-- [ ] T004 [P] Add `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`, `OTEL_DEPLOYMENT_ENVIRONMENT` environment variable entries to container config for all four services (`docker-compose.yml` or equivalent)
-- [ ] T005 [P] Add `com.github.ben-manes.caffeine:caffeine` dependency to `sapphire-health-service/pom.xml` (or `build.gradle`) for in-process rate limiting
+- [x] T001 Add `temperature_records` table migration in `sapphire-health-service/src/main/resources/db/migration/V<next>__create_temperature_records.sql` with all fields, unique constraint `(user_id, device_source_id, recorded_at)`, and indexes `idx_temperature_records_user_time`, `idx_temperature_records_device`
+- [x] T002 Add `temperature_rollups` table migration in `sapphire-charting-api/src/main/resources/db/migration/V<next>__create_temperature_rollups.sql` with all fields and unique constraint `(user_id, period_type, period_start)`
+- [x] T003 [P] Add `BODY_TEMPERATURE` entry to the metric type catalog/enum in `sapphire-health-service` (location matching existing `BloodPressure`/`SpO2` enum definition)
+- [x] T004 [P] Add `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`, `OTEL_DEPLOYMENT_ENVIRONMENT` environment variable entries to container config for all four services (`docker-compose.yml` or equivalent)
+- [x] T005 [P] Add `com.github.ben-manes.caffeine:caffeine` dependency to `sapphire-health-service/pom.xml` (or `build.gradle`) for in-process rate limiting
 
 **Checkpoint**: DB schemas created; metric catalog updated; OTEL env vars configured — ready for story implementation.
 
@@ -28,17 +28,17 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 Create `TemperatureRecord.java` JPA entity in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureRecord.java` — fields: `id`, `userId`, `deviceSourceId`, `recordedAt`, `ingestedAt`, `value`, `unit` (enum `TemperatureUnit`), `ingestionSource` (enum `IngestionSource`), `measurementMethod`; unique constraint annotation matching migration
-- [ ] T007 [P] Create `TemperatureUnit.java` enum (`CELSIUS`, `FAHRENHEIT`) in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureUnit.java`
-- [ ] T008 [P] Create `IngestionSource.java` enum (`DEVICE`, `API`) in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/IngestionSource.java`
-- [ ] T009 Create `TemperatureReadingRequest.java` record DTO in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureReadingRequest.java` — fields matching ingestion contract; Bean Validation annotations (`@NotNull`, `@DecimalMin`, `@DecimalMax`, `@NotBlank`)
-- [ ] T010 [P] Create `BatchIngestionRequest.java` record DTO in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/BatchIngestionRequest.java` — wraps `List<TemperatureReadingRequest>` with `@Size(max=100)`
-- [ ] T011 [P] Create `IngestionResponse.java` record DTO in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/IngestionResponse.java` — fields: `accepted`, `rejected`, `errors` (`List<IngestionError>`)
-- [ ] T012 Create `TemperatureRepository.java` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureRepository.java` — extends `JpaRepository<TemperatureRecord, UUID>`; add custom upsert query using `@Query` with `INSERT … ON CONFLICT DO NOTHING`
-- [ ] T013 Create `DeviceRateLimiter.java` `@Component` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/DeviceRateLimiter.java` — Caffeine `Cache<String, AtomicInteger>` keyed on `deviceSourceId`, 60-second TTL, limit=10; method `checkAndIncrement(deviceId): boolean`
-- [ ] T014 [P] Create `TemperatureRollup.java` JPA entity in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureRollup.java` — fields: `id`, `userId`, `periodType` (enum `PeriodType`), `periodStart`, `periodEnd`, `minCelsius`, `maxCelsius`, `avgCelsius`, `recordCount`, `computedAt`; unique constraint annotation
-- [ ] T015 [P] Create `PeriodType.java` enum (`DAY`, `WEEK`, `MONTH`) in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/PeriodType.java`
-- [ ] T016 [P] Create `TemperatureRollupRepository.java` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureRollupRepository.java` — extends `JpaRepository<TemperatureRollup, UUID>`; custom upsert query for rollup computation
+- [x] T006 Create `TemperatureRecord.java` JPA entity in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureRecord.java` — fields: `id`, `userId`, `deviceSourceId`, `recordedAt`, `ingestedAt`, `value`, `unit` (enum `TemperatureUnit`), `ingestionSource` (enum `IngestionSource`), `measurementMethod`; unique constraint annotation matching migration
+- [x] T007 [P] Create `TemperatureUnit.java` enum (`CELSIUS`, `FAHRENHEIT`) in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureUnit.java`
+- [x] T008 [P] Create `IngestionSource.java` enum (`DEVICE`, `API`) in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/IngestionSource.java`
+- [x] T009 Create `TemperatureReadingRequest.java` record DTO in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureReadingRequest.java` — fields matching ingestion contract; Bean Validation annotations (`@NotNull`, `@DecimalMin`, `@DecimalMax`, `@NotBlank`)
+- [x] T010 [P] Create `BatchIngestionRequest.java` record DTO in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/BatchIngestionRequest.java` — wraps `List<TemperatureReadingRequest>` with `@Size(max=100)`
+- [x] T011 [P] Create `IngestionResponse.java` record DTO in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/IngestionResponse.java` — fields: `accepted`, `rejected`, `errors` (`List<IngestionError>`)
+- [x] T012 Create `TemperatureRepository.java` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureRepository.java` — extends `JpaRepository<TemperatureRecord, UUID>`; add custom upsert query using `@Query` with `INSERT … ON CONFLICT DO NOTHING`
+- [x] T013 Create `DeviceRateLimiter.java` `@Component` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/DeviceRateLimiter.java` — Caffeine `Cache<String, AtomicInteger>` keyed on `deviceSourceId`, 60-second TTL, limit=10; method `checkAndIncrement(deviceId): boolean`
+- [x] T014 [P] Create `TemperatureRollup.java` JPA entity in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureRollup.java` — fields: `id`, `userId`, `periodType` (enum `PeriodType`), `periodStart`, `periodEnd`, `minCelsius`, `maxCelsius`, `avgCelsius`, `recordCount`, `computedAt`; unique constraint annotation
+- [x] T015 [P] Create `PeriodType.java` enum (`DAY`, `WEEK`, `MONTH`) in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/PeriodType.java`
+- [x] T016 [P] Create `TemperatureRollupRepository.java` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureRollupRepository.java` — extends `JpaRepository<TemperatureRollup, UUID>`; custom upsert query for rollup computation
 
 **Checkpoint**: All shared entities, DTOs, enums, and infrastructure beans ready — user story phases can proceed.
 
@@ -52,12 +52,12 @@
 
 ### sapphire-health-service
 
-- [ ] T017 [US1] Implement `TemperatureService.java` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureService.java` — constructor-injected `TemperatureRepository`, `DeviceRateLimiter`; methods: `ingestSingle(userId, request): IngestionResponse`, `ingestBatch(userId, requests): IngestionResponse`; enforce rate limit → 429; validate range [30.0–43.0 °C / 86.0–109.4 °F] → 422; call repository upsert; return accept/reject summary
-- [ ] T018 [P] [US1] Create `TemperatureMetrics.java` `@Component` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureMetrics.java` — wire `LongCounter` beans for `temperature.ingestion.accepted`, `temperature.ingestion.rejected` (labels: outcome = `accepted`/`rejected-out-of-range`/`rejected-invalid-unit`/`rejected-rate-limited`/`deduplicated`) via injected `OpenTelemetry` bean; call from `TemperatureService`
-- [ ] T019 [US1] Implement `TemperatureController.java` `@RestController` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureController.java` — `POST /temperature-readings` (single) and `POST /temperature-readings/batch`; extract userId from JWT principal; delegate to `TemperatureService`; `@ControllerAdvice` maps domain exceptions to 401/422/429 responses; no business logic in controller
-- [ ] T020 [P] [US1] Add `TemperatureServiceTest.java` unit test in `sapphire-health-service/src/test/java/com/sapphire/health/temperature/TemperatureServiceTest.java` — JUnit 5 + Mockito; mock `TemperatureRepository` and `DeviceRateLimiter`; AAA structure; cover: valid single, valid batch, out-of-range rejection, rate-limit rejection, idempotent duplicate, partial-batch (207); 100% line coverage on `TemperatureService`
-- [ ] T021 [P] [US1] Add `TemperatureControllerTest.java` `@WebMvcTest` slice in `sapphire-health-service/src/test/java/com/sapphire/health/temperature/TemperatureControllerTest.java` — cover: 200, 207, 401, 422, 429 response shapes; mock `TemperatureService`
-- [ ] T022 [P] [US1] Add `TemperatureIngestionIT.java` `@IntegrationTest` in `sapphire-health-service/src/test/java/com/sapphire/health/temperature/TemperatureIngestionIT.java` — Docker Compose; test full ingestion round-trip including DB persistence, idempotency constraint, and rate limit counter reset
+- [x] T017 [US1] Implement `TemperatureService.java` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureService.java` — constructor-injected `TemperatureRepository`, `DeviceRateLimiter`; methods: `ingestSingle(userId, request): IngestionResponse`, `ingestBatch(userId, requests): IngestionResponse`; enforce rate limit → 429; validate range [30.0–43.0 °C / 86.0–109.4 °F] → 422; call repository upsert; return accept/reject summary
+- [x] T018 [P] [US1] Create `TemperatureMetrics.java` `@Component` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureMetrics.java` — wire `LongCounter` beans for `temperature.ingestion.accepted`, `temperature.ingestion.rejected` (labels: outcome = `accepted`/`rejected-out-of-range`/`rejected-invalid-unit`/`rejected-rate-limited`/`deduplicated`) via injected `OpenTelemetry` bean; call from `TemperatureService`
+- [x] T019 [US1] Implement `TemperatureController.java` `@RestController` in `sapphire-health-service/src/main/java/com/sapphire/health/temperature/TemperatureController.java` — `POST /temperature-readings` (single) and `POST /temperature-readings/batch`; extract userId from JWT principal; delegate to `TemperatureService`; `@ControllerAdvice` maps domain exceptions to 401/422/429 responses; no business logic in controller
+- [x] T020 [P] [US1] Add `TemperatureServiceTest.java` unit test in `sapphire-health-service/src/test/java/com/sapphire/health/temperature/TemperatureServiceTest.java` — JUnit 5 + Mockito; mock `TemperatureRepository` and `DeviceRateLimiter`; AAA structure; cover: valid single, valid batch, out-of-range rejection, rate-limit rejection, idempotent duplicate, partial-batch (207); 100% line coverage on `TemperatureService`
+- [x] T021 [P] [US1] Add `TemperatureControllerTest.java` `@WebMvcTest` slice in `sapphire-health-service/src/test/java/com/sapphire/health/temperature/TemperatureControllerTest.java` — cover: 200, 207, 401, 422, 429 response shapes; mock `TemperatureService`
+- [x] T022 [P] [US1] Add `TemperatureIngestionIT.java` `@IntegrationTest` in `sapphire-health-service/src/test/java/com/sapphire/health/temperature/TemperatureIngestionIT.java` — Docker Compose; test full ingestion round-trip including DB persistence, idempotency constraint, and rate limit counter reset
 
 **Checkpoint (US1)**: `POST /temperature-readings[/batch]` fully functional — valid records stored, invalid rejected with structured errors, duplicates idempotent, rate limit enforced, OTEL counters emitting.
 
@@ -71,31 +71,31 @@
 
 ### sapphire-charting-api
 
-- [ ] T023 [US2] Implement `TemperatureTrendService.java` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureTrendService.java` — constructor-injected `TemperatureRollupRepository`; method `getTrend(userId, range, from, to, deviceSourceId): TemperatureTrendResponse`; returns rollup data points; handles empty result (returns empty list, not null)
-- [ ] T024 [P] [US2] Implement `TemperatureRollupJob.java` `@Component` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureRollupJob.java` — `@Scheduled(cron = "0 */15 * * * *")`; reads `TemperatureRecord` rows from `sapphire-health-service` DB (or shared DB) where `recorded_at > watermark`; upserts `TemperatureRollup` rows for DAY/WEEK/MONTH buckets; updates watermark; idempotent
-- [ ] T025 [P] [US2] Create `TemperatureTrendResponse.java` record DTO and `TemperatureDataPoint.java` record in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/` — matching REST contract shape in `contracts/rest-charting-api.md`
-- [ ] T026 [P] [US2] Create `TemperatureReportingMetrics.java` `@Component` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureReportingMetrics.java` — `LongCounter` for `temperature.trend.queries` labelled by `range` (DAY/WEEK/MONTH); call from `TemperatureTrendService`
-- [ ] T027 [US2] Implement `TemperatureTrendController.java` `@RestController` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureTrendController.java` — `GET /metrics/temperature/trend` with query params `range`, `deviceSourceId`, `from`, `to`; validate `range` enum; delegate to `TemperatureTrendService`; return 200 with data or 200 with empty `dataPoints` list
-- [ ] T028 [P] [US2] Add `TemperatureTrendServiceTest.java` unit test in `sapphire-charting-api/src/test/java/com/sapphire/charting/temperature/TemperatureTrendServiceTest.java` — mock `TemperatureRollupRepository`; cover: populated result, empty result, date-range filter, deviceSource filter; 100% coverage on `TemperatureTrendService`
+- [x] T023 [US2] Implement `TemperatureTrendService.java` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureTrendService.java` — constructor-injected `TemperatureRollupRepository`; method `getTrend(userId, range, from, to, deviceSourceId): TemperatureTrendResponse`; returns rollup data points; handles empty result (returns empty list, not null)
+- [x] T024 [P] [US2] Implement `TemperatureRollupJob.java` `@Component` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureRollupJob.java` — `@Scheduled(cron = "0 */15 * * * *")`; reads `TemperatureRecord` rows from `sapphire-health-service` DB (or shared DB) where `recorded_at > watermark`; upserts `TemperatureRollup` rows for DAY/WEEK/MONTH buckets; updates watermark; idempotent
+- [x] T025 [P] [US2] Create `TemperatureTrendResponse.java` record DTO and `TemperatureDataPoint.java` record in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/` — matching REST contract shape in `contracts/rest-charting-api.md`
+- [x] T026 [P] [US2] Create `TemperatureReportingMetrics.java` `@Component` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureReportingMetrics.java` — `LongCounter` for `temperature.trend.queries` labelled by `range` (DAY/WEEK/MONTH); call from `TemperatureTrendService`
+- [x] T027 [US2] Implement `TemperatureTrendController.java` `@RestController` in `sapphire-charting-api/src/main/java/com/sapphire/charting/temperature/TemperatureTrendController.java` — `GET /metrics/temperature/trend` with query params `range`, `deviceSourceId`, `from`, `to`; validate `range` enum; delegate to `TemperatureTrendService`; return 200 with data or 200 with empty `dataPoints` list
+- [x] T028 [P] [US2] Add `TemperatureTrendServiceTest.java` unit test in `sapphire-charting-api/src/test/java/com/sapphire/charting/temperature/TemperatureTrendServiceTest.java` — mock `TemperatureRollupRepository`; cover: populated result, empty result, date-range filter, deviceSource filter; 100% coverage on `TemperatureTrendService`
 
 ### sapphire-bff-api
 
-- [ ] T029 [US2] Create `src/schema/temperature.graphql` in `sapphire-bff-api` — add all new types from `contracts/graphql-bff-api.md`: `TemperatureUnit`, `TemperatureRange`, `IngestionSource`, `TemperatureRecord`, `TemperatureDataPoint`, `TemperatureTrendPayload`, input types, payload types; extend `Query` and `Mutation`
-- [ ] T030 [P] [US2] Create `src/resolvers/temperature/temperatureDataLoader.ts` in `sapphire-bff-api` — `DataLoader<{userId, range, from, to, deviceSourceId}, TemperatureTrendPayload>` batching calls to `GET /metrics/temperature/trend`
-- [ ] T031 [P] [US2] Implement `src/resolvers/temperature/temperatureTrend.resolver.ts` in `sapphire-bff-api` — `Query.temperatureTrend`: extract `userId` from `context.jwt.sub`; load via `context.loaders.temperatureTrend`; validate JWT before delegation; type `context` as `AppContext` (no `any`)
-- [ ] T032 [P] [US2] Add `src/schema/__tests__/temperature.contract.test.ts` in `sapphire-bff-api` — schema snapshot test for all new types and fields; run in pre-merge stage
+- [x] T029 [US2] Create `src/schema/temperature.graphql` in `sapphire-bff-api` — add all new types from `contracts/graphql-bff-api.md`: `TemperatureUnit`, `TemperatureRange`, `IngestionSource`, `TemperatureRecord`, `TemperatureDataPoint`, `TemperatureTrendPayload`, input types, payload types; extend `Query` and `Mutation`
+- [x] T030 [P] [US2] Create `src/resolvers/temperature/temperatureDataLoader.ts` in `sapphire-bff-api` — `DataLoader<{userId, range, from, to, deviceSourceId}, TemperatureTrendPayload>` batching calls to `GET /metrics/temperature/trend`
+- [x] T031 [P] [US2] Implement `src/resolvers/temperature/temperatureTrend.resolver.ts` in `sapphire-bff-api` — `Query.temperatureTrend`: extract `userId` from `context.jwt.sub`; load via `context.loaders.temperatureTrend`; validate JWT before delegation; type `context` as `AppContext` (no `any`)
+- [x] T032 [P] [US2] Add `src/schema/__tests__/temperature.contract.test.ts` in `sapphire-bff-api` — schema snapshot test for all new types and fields; run in pre-merge stage
 
 ### sapphire-ui
 
-- [ ] T033 [US2] Create `src/features/temperature/temperature.types.ts` in `sapphire-ui` — TypeScript interfaces for `TemperatureUnit`, `TemperatureRange`, `TemperatureDataPoint`, `TemperatureTrendPayload`; no `any`
-- [ ] T034 [P] [US2] Create `src/features/temperature/temperature.graphql` in `sapphire-ui` — named `GetTemperatureTrend` query using `temperatureTrend` with variables `$range`, `$deviceSourceId`, `$from`, `$to`; include fragment for `TemperatureDataPoint`
-- [ ] T035 [P] [US2] Create `src/features/temperature/useTemperatureTrend.ts` custom hook in `sapphire-ui` — wraps `useQuery(GetTemperatureTrendDocument)` with `fetchPolicy: 'cache-and-network'`; reads `range` and `unit` from `useSearchParams()`; returns `{ data, loading, error, refetch }`
-- [ ] T036 [P] [US2] Create temperature conversion utility `src/features/temperature/temperatureUtils.ts` in `sapphire-ui` — pure functions `celsiusToFahrenheit(c: number): number` and `fahrenheitToCelsius(f: number): number`; exported for unit tests
-- [ ] T037 [US2] Create `src/features/temperature/TemperatureChartSkeleton.tsx`, `TemperatureChartEmpty.tsx`, `TemperatureChartError.tsx` components in `sapphire-ui` — skeleton uses design token dimensions matching chart; empty renders "No temperature data yet. Connect a device to get started."; error renders "Try again" button calling `onRetry` prop
-- [ ] T038 [US2] Create `src/features/temperature/TemperatureChart.tsx` in `sapphire-ui` — functional component; props: `data: TemperatureTrendPayload`, `unit: TemperatureUnit`; renders sapphire-charting-api chart instance with min/max/avg series; converts values client-side using `temperatureUtils`; uses design tokens and shared colour palette; no hardcoded hex values
-- [ ] T039 [US2] Create `src/features/temperature/TemperatureMetricCard.tsx` in `sapphire-ui` — dashboard list entry component; renders loading skeleton / error / empty / chart states driven by `useTemperatureTrend`; range selector (Day/Week/Month) and unit toggle update URL query params via `setSearchParams`; all three UI states required by constitution
-- [ ] T040 [P] [US2] Add `src/features/temperature/useTemperatureTrend.test.ts` unit test in `sapphire-ui` — React Testing Library; mock Apollo client; cover: loading state, data state, error state, URL param read for range and unit
-- [ ] T041 [P] [US2] Add `src/features/temperature/TemperatureChart.test.tsx` unit test in `sapphire-ui` — RTL; cover: renders data points, Celsius/Fahrenheit conversion, empty state, skeleton, error with retry button
+- [x] T033 [US2] Create `src/features/temperature/temperature.types.ts` in `sapphire-ui` — TypeScript interfaces for `TemperatureUnit`, `TemperatureRange`, `TemperatureDataPoint`, `TemperatureTrendPayload`; no `any`
+- [x] T034 [P] [US2] Create `src/features/temperature/temperature.graphql` in `sapphire-ui` — named `GetTemperatureTrend` query using `temperatureTrend` with variables `$range`, `$deviceSourceId`, `$from`, `$to`; include fragment for `TemperatureDataPoint`
+- [x] T035 [P] [US2] Create `src/features/temperature/useTemperatureTrend.ts` custom hook in `sapphire-ui` — wraps `useQuery(GetTemperatureTrendDocument)` with `fetchPolicy: 'cache-and-network'`; reads `range` and `unit` from `useSearchParams()`; returns `{ data, loading, error, refetch }`
+- [x] T036 [P] [US2] Create temperature conversion utility `src/features/temperature/temperatureUtils.ts` in `sapphire-ui` — pure functions `celsiusToFahrenheit(c: number): number` and `fahrenheitToCelsius(f: number): number`; exported for unit tests
+- [x] T037 [US2] Create `src/features/temperature/TemperatureChartSkeleton.tsx`, `TemperatureChartEmpty.tsx`, `TemperatureChartError.tsx` components in `sapphire-ui` — skeleton uses design token dimensions matching chart; empty renders "No temperature data yet. Connect a device to get started."; error renders "Try again" button calling `onRetry` prop
+- [x] T038 [US2] Create `src/features/temperature/TemperatureChart.tsx` in `sapphire-ui` — functional component; props: `data: TemperatureTrendPayload`, `unit: TemperatureUnit`; renders sapphire-charting-api chart instance with min/max/avg series; converts values client-side using `temperatureUtils`; uses design tokens and shared colour palette; no hardcoded hex values
+- [x] T039 [US2] Create `src/features/temperature/TemperatureMetricCard.tsx` in `sapphire-ui` — dashboard list entry component; renders loading skeleton / error / empty / chart states driven by `useTemperatureTrend`; range selector (Day/Week/Month) and unit toggle update URL query params via `setSearchParams`; all three UI states required by constitution
+- [x] T040 [P] [US2] Add `src/features/temperature/useTemperatureTrend.test.ts` unit test in `sapphire-ui` — React Testing Library; mock Apollo client; cover: loading state, data state, error state, URL param read for range and unit
+- [x] T041 [P] [US2] Add `src/features/temperature/TemperatureChart.test.tsx` unit test in `sapphire-ui` — RTL; cover: renders data points, Celsius/Fahrenheit conversion, empty state, skeleton, error with retry button
 
 **Checkpoint (US2)**: Dashboard shows temperature metric card with trend chart; range selector and unit toggle work client-side; loading/error/empty states all render; BFF GraphQL query returns correct data.
 
@@ -109,9 +109,9 @@
 
 ### sapphire-charting-api
 
-- [ ] T042 [US3] Extend the existing analytics export service in `sapphire-charting-api` (file path matching existing export service class) to include `TemperatureRecord` data when `metric_type=BODY_TEMPERATURE` or when no metric type filter is applied; apply `from`, `to`, and `deviceSourceId` filters; map to existing export response format
-- [ ] T043 [P] [US3] Extend the existing export controller in `sapphire-charting-api` to accept `metric_type=BODY_TEMPERATURE` as a valid query parameter value; no new endpoint — additive only
-- [ ] T044 [P] [US3] Add export filter unit test in `sapphire-charting-api/src/test/java/com/sapphire/charting/temperature/TemperatureExportServiceTest.java` — cover: date-range filter only, device-source filter only, combined filters, empty result, all-metrics export includes temperature
+- [x] T042 [US3] Extend the existing analytics export service in `sapphire-charting-api` (file path matching existing export service class) to include `TemperatureRecord` data when `metric_type=BODY_TEMPERATURE` or when no metric type filter is applied; apply `from`, `to`, and `deviceSourceId` filters; map to existing export response format
+- [x] T043 [P] [US3] Extend the existing export controller in `sapphire-charting-api` to accept `metric_type=BODY_TEMPERATURE` as a valid query parameter value; no new endpoint — additive only
+- [x] T044 [P] [US3] Add export filter unit test in `sapphire-charting-api/src/test/java/com/sapphire/charting/temperature/TemperatureExportServiceTest.java` — cover: date-range filter only, device-source filter only, combined filters, empty result, all-metrics export includes temperature
 
 **Checkpoint (US3)**: `GET /metrics/export` returns temperature records correctly filtered; all combinations of date-range and device-source filters produce the correct intersection.
 
@@ -121,13 +121,13 @@
 
 **Purpose**: Documentation, integration wiring, quickstart validation, and ensuring all Javadoc/JSDoc is in place.
 
-- [ ] T045 [P] Add Javadoc comments to all public methods in `TemperatureService`, `TemperatureController`, `DeviceRateLimiter`, `TemperatureTrendService`, `TemperatureTrendController`, `TemperatureRollupJob` — intent-focused, not implementation-focused
-- [ ] T046 [P] Add JSDoc to `useTemperatureTrend.ts`, `temperatureUtils.ts`, and `TemperatureChart.tsx` exported functions and props interfaces in `sapphire-ui`
-- [ ] T047 [P] Verify `mvn -q -DskipTests compile` (or `./gradlew compileJava`) passes with no warnings in `sapphire-health-service` and `sapphire-charting-api`
-- [ ] T048 [P] Verify `tsc --noEmit` passes with no errors in `sapphire-ui`
-- [ ] T049 [P] Run unit test coverage gates: `TemperatureService` = 100% line coverage; all other Java classes ≥ 80%; `sapphire-ui` features ≥ 70%
-- [ ] T050 [P] Update `specs/SDDSDLC-154/contracts/graphql-bff-api.md` if any schema fields were adjusted during implementation; confirm schema snapshot test passes
-- [ ] T051 Run end-to-end quickstart validation per `specs/SDDSDLC-154/quickstart.md` steps 1–10; confirm all services respond correctly and OTEL spans appear in collector
+- [x] T045 [P] Add Javadoc comments to all public methods in `TemperatureService`, `TemperatureController`, `DeviceRateLimiter`, `TemperatureTrendService`, `TemperatureTrendController`, `TemperatureRollupJob` — intent-focused, not implementation-focused
+- [x] T046 [P] Add JSDoc to `useTemperatureTrend.ts`, `temperatureUtils.ts`, and `TemperatureChart.tsx` exported functions and props interfaces in `sapphire-ui`
+- [x] T047 [P] Verify `mvn -q -DskipTests compile` (or `./gradlew compileJava`) passes with no warnings in `sapphire-health-service` and `sapphire-charting-api`
+- [x] T048 [P] Verify `tsc --noEmit` passes with no errors in `sapphire-ui`
+- [x] T049 [P] Run unit test coverage gates: `TemperatureService` = 100% line coverage; all other Java classes ≥ 80%; `sapphire-ui` features ≥ 70%
+- [x] T050 [P] Update `specs/SDDSDLC-154/contracts/graphql-bff-api.md` if any schema fields were adjusted during implementation; confirm schema snapshot test passes
+- [x] T051 Run end-to-end quickstart validation per `specs/SDDSDLC-154/quickstart.md` steps 1–10; confirm all services respond correctly and OTEL spans appear in collector
 
 ---
 
