@@ -26,10 +26,9 @@
 
 constitution:
   global_source:
-    mode: external  #allowed values: local | external | none
-    connection-types:
-      MCP:
-        provider: context-studio
+    mode: local  #allowed values: local | external | none
+    path: org-constitution/constitution.md
+  global_only: false
 
 # ---------------------------------------------------------------------------
 # pdlc — PDLC workflow settings
@@ -65,16 +64,16 @@ pdlc:
   roles:
     # The submitter role; change submitter_role above to use a different entry.
     fde:
-      github_team: ""                # e.g. "my-org/fde-team"
-      github_users: []               # e.g. ["alice", "bob"]
+      github_team: "IBMC-WORK-REDESIGN-FDE-Truist/sapphire-fde"
+      github_users: []
     application_engineer:
-      github_team: ""                # e.g. "my-org/app-engineers"
+      github_team: ""
       github_users: []
     product_owner:
-      github_team: ""                # e.g. "my-org/product-owners"
+      github_team: "IBMC-WORK-REDESIGN-FDE-Truist/sapphire-product-owners"
       github_users: []
     fda:
-      github_team: ""                # e.g. "my-org/fda-team"
+      github_team: "IBMC-WORK-REDESIGN-FDE-Truist/sapphire-fda"
       github_users: []
 
 # ---------------------------------------------------------------------------
