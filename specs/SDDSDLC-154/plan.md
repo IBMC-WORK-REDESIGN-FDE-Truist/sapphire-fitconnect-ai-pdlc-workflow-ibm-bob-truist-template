@@ -1,6 +1,6 @@
 # Implementation Plan: SDDSDLC-154 — Body Temperature Metric Ingestion, Storage, and Reporting
 
-**Branch**: `SDDSDLC-154` | **Date**: 2026-08-20 | **Spec**: [spec.md](spec.md)
+**Branch**: `SDDSDLC-154` | **Date**: 2026-08-20 | **Last Updated**: 2026-09-07 (post-clarification) | **Spec**: [spec.md](spec.md)
 
 ---
 
@@ -19,7 +19,7 @@ Add body temperature as a first-class health metric across four services. The `s
 **Target Platform**: Linux container (all services); browser (UI)
 **Project Type**: Multi-service web application
 **Performance Goals**: Dashboard chart load < 3 s (SC-001); unit switch < 500 ms (SC-007); ingestion responds within normal HTTP latency (no synchronous rollup)
-**Constraints**: Additive-only GraphQL changes; no breaking changes to existing REST contracts; health data must not appear in logs; rate limit 10 req/min per device
+**Constraints**: Additive-only GraphQL changes; no breaking changes to existing REST contracts; health data must not appear in logs; rate limit 10 req/min per device; future-dated timestamps rejected; missing/unrecognised unit rejected (no default); unregistered device ID rejected with 403; all timestamps UTC; rollups pre-computed async (max 1-hour staleness)
 **Scale/Scope**: 4 repos; 2 new DB tables; 3 new REST endpoints; 2 new GraphQL operations; 1 React feature directory
 
 ---
@@ -45,6 +45,11 @@ Add body temperature as a first-class health metric across four services. The `s
 | 15 | Distributed traces via OTEL SDK; W3C traceparent propagation | IV. Observability | ✅ Auto-instrumented; BFF forwards `traceparent` header to REST backends |
 | 16 | OTEL env vars set in every container | IV. Observability | ✅ `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`, `OTEL_DEPLOYMENT_ENVIRONMENT` in all container configs |
 | 17 | *(LangGraph only)* — not applicable | I. Code Quality | N/A |
+| 18 | Future-dated timestamps rejected with structured error (FR-001c) | II. Edge Cases | ✅ Planned — service-layer guard: `recorded_at > Instant.now()` → 422 |
+| 19 | Unit field required; `celsius`/`fahrenheit` only; no default (FR-002 updated) | II. Edge Cases | ✅ Planned — `@NotNull` + custom `@ValidTemperatureUnit` validator on DTO |
+| 20 | Unregistered device ID → 403 Forbidden (FR-004a) | II. Security | ✅ Planned — `DeviceOwnershipService.assertOwnership(userId, deviceSourceId)` called before validation |
+| 21 | Rollups pre-computed by scheduled async job; max 1-hour staleness (FR-013 updated) | II. Storage | ✅ Planned — `@Scheduled(fixedDelay = 3600000)` on `TemperatureRollupJob`; reads from rollup table |
+| 22 | All timestamps stored/queried in UTC; rollup buckets in UTC; DST is client concern (FR-011 updated) | II. Storage | ✅ Planned — `TIMESTAMPTZ` columns; `Instant` in Java; UTC-normalised `DATE` buckets in rollup |
 
 ---
 
