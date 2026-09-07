@@ -1,0 +1,33 @@
+# GetTemperatureTrend GraphQL Query
+# File: sapphire-ui/src/features/temperature/temperature.graphql
+
+fragment TemperatureDataPointFields on TemperatureDataPoint {
+  periodStart
+  periodEnd
+  minCelsius
+  maxCelsius
+  avgCelsius
+  recordCount
+}
+
+query GetTemperatureTrend(
+  $range: TemperatureRange!
+  $deviceSourceId: String
+  $from: String
+  $to: String
+) {
+  temperatureTrend(
+    range: $range
+    deviceSourceId: $deviceSourceId
+    from: $from
+    to: $to
+  ) {
+    userId
+    range
+    from
+    to
+    dataPoints {
+      ...TemperatureDataPointFields
+    }
+  }
+}

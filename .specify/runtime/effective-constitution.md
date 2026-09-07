@@ -1,18 +1,37 @@
 <!-- EFFECTIVE CONSTITUTION
-     Generated  : 2026-04-02T00:00:00Z
-     Global     : settings.yaml -> constitution.global_source.mode=local, path=org-constitution/constitution.md
-     Local      : not applied
-     Precedence : global only (no local constitution applied)
+     Generated  : 2026-09-07T10:00:00Z
+     Global     : org-constitution/constitution.md (local path)
+     Local      : .specify/memory/constitution.md
+     Precedence : local-over-global
+     If confused, give precedence to the local constitution.
 -->
 
 # Effective Constitution
 
-**Generated:** 2026-04-02T00:00:00Z
-**Mode:** Global-only (local constitution intentionally not applied).
+**Generated:** 2026-09-07T10:00:00Z
+**Precedence:** Local constitution overrides global on conflict.
+**Conflict report:** `.specify/runtime/effective-constitution-report.md`
 
-> No local constitution was applied in this run. All rules below are authoritative as-is.
+> If a rule in Part 1 conflicts with a rule in Part 2, Part 2 wins — always.
 
 ---
+
+## Resolved Rules — Authoritative Reference
+
+> **Read this section first.** These are the final, binding rules for every
+> topic where global and local conflict. Agents MUST apply these rules.
+> Do not apply the corresponding Part 1 rule for any topic listed here.
+
+| # | Topic | Authoritative Rule (local wins) |
+|---|---|---|
+| 1 | Error handling scope | Silent error swallowing is FORBIDDEN in **all languages**. Empty `catch` blocks and bare `except` clauses with no action are FORBIDDEN everywhere — not only in Python. Either handle the error explicitly with a logged, structured error event, or let it propagate to the nearest boundary handler. |
+
+---
+
+## PART 1 — Global Baseline
+
+> Source: `org-constitution/constitution.md` (local path)
+> Rules superseded by Part 2 are documented in the conflict report.
 
 # Constitution
 
@@ -120,193 +139,176 @@ in CI. Commented-out code MUST NOT appear in any commit; use feature flags or de
   environment-configured service clients.
 - `DataLoader` MUST be used for any field resolver that could trigger N+1 calls.
 
----
 
-### II. Testing Standards
-
-**Coverage Gates (enforced in CI)**
-
-- Java services: 80% line coverage minimum; domain service classes require 100% coverage.
-- Python services: 80% line coverage minimum; all Pydantic model validators MUST have
-  explicit unit tests.
-- TypeScript/React: 70% line coverage minimum; all custom hooks MUST have unit tests
-  written with React Testing Library.
-- BFF (Node.js): all resolvers MUST have integration tests run against mocked backend
-  services (run during pre-merge stage, not validation stage).
-
-**Test Pyramid**
-
-- **Unit tests** MUST mock all I/O (DB, HTTP, Kafka) and MUST complete in < 5 seconds
-  total per module.
-- **Integration tests** MUST use real infrastructure (PostgreSQL, Kafka, Qdrant) via
-  Docker Compose. They MUST be tagged `@IntegrationTest` in Java and
-  `pytest.mark.integration` in Python.
-- **E2E tests** MUST live exclusively in `sapphire-playwright` and cover complete user
-  journeys through the UI. They MUST NOT duplicate integration-level assertions.
-- **Contract tests** are REQUIRED for every GraphQL schema change in `sapphire-bff-api`
-  and every Kafka event schema change. Contracts MUST be verified against all known
-  consumers before merge.
-
-**Test Quality Rules**
-
-- String literals appearing in more than one test MUST be extracted to constants.
-- Arrange-Act-Assert (AAA) structure is MANDATORY. Each block MUST be visually separated
-  with a blank line or comment.
-- Tests MUST NOT share mutable state. Static mutable fields in test classes are FORBIDDEN.
-- Flaky tests are P1 bugs. A flaky test MUST be quarantined and fixed before the end of
-  the sprint in which it is discovered.
-
-**Test Execution Stages**
-
-- **Validation Stage (PR/CI)**: Unit tests only. Integration tests are **explicitly excluded** from validation. Validation includes:
-  - Lint checks (ruff for Python, ESLint for TypeScript)
-  - Unit tests with coverage gate enforcement
-  - Mandatory compilation checks (Java `mvn compile`, Python `python -m compileall`, TypeScript `tsc --noEmit`)
-  - Security scanning (SCA, dependency check)
-  - Contract tests for schema changes
-- **Pre-merge / Integration Tests**: Full test pyramid including integration tests with real infrastructure (Docker Compose). Integration tests run **after** validation passes but **before** merge to main.
-- **Post-merge (Nightly/Staging)**: E2E tests in `sapphire-playwright` against staging environment.
-
-Integration tests MUST NOT block CI validation pipelines. They MUST run in a separate, parallel stage.
+**Version**: 2.2.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-04-02
 
 ---
 
-### III. User Experience Consistency
+## PART 2 — Local Constitution (Authoritative)
 
-**Loading & Error States**
+> Source: `.specify/memory/constitution.md`
+> Rules here take precedence over Part 1 wherever a conflict exists.
 
-- Every data-fetching component MUST handle three explicit states: loading skeleton, error
-  boundary with retry action, and empty state. Rendering partially loaded data without a
-  visual indicator is FORBIDDEN.
-- Skeleton screens MUST match the dimensions of the loaded content to prevent layout
-  shift.
-- Error messages shown to users MUST be actionable (e.g., "Try again" or "Contact
-  support"). Exposing stack traces or internal error codes to users is FORBIDDEN.
+# Sapphire FitConnect Constitution
+<!-- Local project constitution for the Sapphire FitConnect AI PDLC workspace.
+     Global constitution source: org-constitution/constitution.md
+     This file adds project-specific rules that extend (never override) the global.
+     Generated by: /speckit.constitution
+-->
 
-**Auth & Session**
+## Core Principles
 
-- Keycloak OIDC/PKCE MUST be the only authentication path. Bypass routes are FORBIDDEN
-  in all environments, including local development.
-- Token expiry MUST be handled silently via refresh. A login redirect caused by a routine
-  token refresh is a UX defect.
-- Unauthorized (401) and Forbidden (403) states MUST render distinct, user-friendly
-  pages; blank screens are FORBIDDEN.
+### I. Documentation & Audit Trail (NON-NEGOTIABLE)
 
-**Navigation & State**
+All new features MUST be documented in markdown format before implementation begins.
+Documentation MUST include:
 
-- URL state MUST be the source of truth for page-level filters, pagination, and selected
-  items, so that deep links always work.
-- Browser back/forward MUST work correctly for all primary navigation flows.
-- All interactive elements MUST have keyboard navigation support and ARIA labels. WCAG AA
-  compliance is the minimum accessibility bar.
+- A feature specification (`spec.md`) describing the problem, acceptance criteria, and
+  affected repos.
+- An implementation plan (`plan.md`) covering tech stack decisions, data model changes,
+  and API contracts.
+- A tasks file (`tasks.md`) with dependency-ordered, repo-labelled tasks.
 
-**Design Consistency**
+Every merged PR MUST reference its parent Jira story key in the commit message title.
+Silent, undocumented changes to any shared schema (GraphQL, Avro, OpenAPI, database) are
+FORBIDDEN.
 
-- The shared design token system MUST be used for all spacing, color, and typography.
-  Hardcoded hex values and pixel values outside the token scale are FORBIDDEN.
-- Toasts and notifications MUST use the shared notification component. Ad-hoc `alert()`
-  calls and custom toast implementations are FORBIDDEN.
-- Charts rendered via `sapphire-charting-api` MUST follow the shared color palette for
-  health metric categories to ensure visual consistency across all dashboard views.
-- Any new UI screen should maintain consistency with the existing screens.
-- UI changes MUST preserve the existing product theme, design language, and token system. Introducing a new visual theme or conflicting styling patterns is FORBIDDEN unless explicitly approved in the story/specification.
+### II. Brownfield-First Development
 
----
+The Sapphire codebase is an established multi-repo system. All changes MUST:
 
-### IV. Observability
+- Understand and follow existing patterns in the target repo before introducing anything
+  new. Deviating from existing patterns MUST be explicitly justified in the spec.
+- Minimize the diff — make the smallest change that satisfies the acceptance criteria.
+  Opportunistic refactoring outside the story scope is FORBIDDEN.
+- Trace the full call path (entry point → data layer) before touching any file. Do not
+  assume behavior from naming alone.
+- Prefer additive changes over modifications. Deletions of existing public APIs, GraphQL
+  fields, Avro schema fields, or Kafka topic schemas MUST be treated as breaking changes
+  and require a deprecation period documented in the spec.
 
-Every service MUST be observable via structured logs, metrics, and distributed traces
-exported through OpenTelemetry (OTEL). Observability is not optional — it is a
-requirement for any service that reaches production.
+### III. Cross-Repo Orchestration
 
-**Structured JSON Logging**
+Sapphire features frequently span multiple repos. The following rules apply to all
+cross-repo work:
 
-- All services MUST emit logs as structured JSON to stdout. Human-readable plain-text
-  log output is FORBIDDEN in non-local environments.
-- Every log record MUST include at minimum: `timestamp` (ISO-8601), `level`, `service`,
-  `trace_id`, `span_id`, `message`, and `environment`.
-- Log levels MUST follow the standard severity ladder: `DEBUG`, `INFO`, `WARN`, `ERROR`,
-  `FATAL`. Using non-standard levels (e.g., `VERBOSE`, `TRACE` as a root level) is
+- The PDLC orchestrator repo (`sapphire-fitconnect-ai-pdlc-workflow-ibm-bob-template`)
+  owns the canonical spec, plan, tasks, and workflow state for every story.
+- Child stories MUST be created in Jira for each affected sibling repo. Child story keys
+  MUST be recorded in `workflow-state.md > Child Stories`.
+- Implementation artifacts for sibling repos are authored and reviewed in the orchestrator
+  repo before being applied to the target repos.
+- No sibling repo branch MUST be merged to `main` before its parent story's tasks PR is
+  approved and merged in the orchestrator.
+
+### IV. Approval Gates & Role Separation
+
+- **Spec PR**: MUST be approved by a `product_owner` before planning begins.
+- **Plan PR**: MUST be approved by an `fde` before tasks are written.
+- **Tasks PR**: MUST be approved by an `fde` before implementation begins.
+- **Implementation PR**: MUST be reviewed and approved before merge; no self-merge.
+- The submitter MAY NOT approve their own artifact PRs. Role separation is enforced by
+  the PDLC workflow; circumventing it is FORBIDDEN.
+
+### V. Contract-First Integration
+
+All cross-service interfaces MUST be defined and agreed upon before implementation:
+
+- **REST APIs**: An OpenAPI contract (or equivalent structured endpoint doc) MUST exist
+  in `specs/<STORY_ID>/contracts/` before any controller, service, or client code is
+  written.
+- **GraphQL**: Schema SDL changes MUST be defined in `contracts/graphql-bff-api.md`
+  before resolver implementation. Additive-only changes are the default; breaking changes
+  require an approved spec amendment.
+- **Kafka events**: Avro schema changes MUST be documented and backwards-compatible.
+  A consumer MUST NOT break when a new optional field is added by a producer.
+- **Database migrations**: Flyway/Liquibase migration scripts MUST be included in the
+  tasks list and reviewed before service code that depends on them is written.
+
+### VI. Observability & Error Handling
+
+In addition to the global OTEL requirements, all Sapphire services MUST follow:
+
+- Health data (temperature readings, heart rate, SpO2, step counts, wellness scores) MUST
+  NEVER appear in log fields, span attributes, or metric label values. Mask or omit all
+  such values before any telemetry emission.
+- Every service MUST expose a `/health` (or `/actuator/health` for Spring Boot) liveness
+  endpoint that returns HTTP 200 in a healthy state. Missing liveness endpoints block
+  production deployments.
+- Silent error swallowing is FORBIDDEN in all languages. Either handle the error
+  explicitly with a logged, structured error event, or let it propagate to the nearest
+  boundary handler. Empty `catch` blocks and bare `except` clauses with no action are
   FORBIDDEN.
-- Sensitive data (PII, tokens, passwords, health identifiers) MUST NOT appear in log
-  fields. Mask or omit such values before logging.
-- Java services MUST use Logback with `logstash-logback-encoder` for JSON output.
-  Python services MUST use `structlog` configured with `JSONRenderer`. Node.js/BFF MUST
-  use `pino` with JSON output mode.
 
-**Metrics**
+### VII. Configuration & Environment Safety
 
-- All services MUST expose application metrics via the OTEL Metrics SDK and export to
-  the configured OTEL Collector endpoint (`OTEL_EXPORTER_OTLP_ENDPOINT`).
-- The following metrics are REQUIRED for every service:
-  - Request/operation count (counter)
-  - Request/operation duration (histogram with p50/p95/p99 buckets)
-  - Error rate (counter, labelled by error type)
-  - Active in-flight requests/tasks (up-down counter)
-- Java services MUST use `opentelemetry-spring-boot-starter`. Python services MUST use
-  `opentelemetry-sdk` + `opentelemetry-instrumentation-fastapi`. Node.js BFF MUST use
-  `@opentelemetry/sdk-node` with auto-instrumentation.
-- Business-level metrics (e.g., events ingested, recommendations served, summaries
-  generated) MUST be emitted as custom OTEL counters — not derived solely from
-  infrastructure metrics.
+- No hardcoded URLs, credentials, timeouts, ports, or environment names in source code.
+  All such values MUST be injected via environment variables or a Spring/Pydantic
+  configuration object.
+- All database mutations MUST be idempotent where possible (e.g., `ON CONFLICT DO
+  NOTHING`, Flyway migration versioning). Destructive operations without a reversible
+  path MUST be justified in the spec.
+- Secrets MUST NOT appear in any git-tracked file, log line, or environment variable
+  printed to stdout. Use a secrets manager or `.env` file excluded by `.gitignore`.
 
-**Distributed Tracing**
+---
 
-- All services MUST instrument distributed traces using the OTEL Traces SDK and export
-  spans to the configured OTEL Collector.
-- Every inbound HTTP request and Kafka message MUST create a root span. Context
-  propagation MUST use the W3C `traceparent` header — proprietary propagation formats
-  are FORBIDDEN.
-- Spans MUST include `service.name`, `service.version`, and `deployment.environment`
-  resource attributes.
-- Database queries, outbound HTTP calls, and Kafka produce/consume operations MUST each
-  be represented as child spans with the relevant semantic conventions
-  (`db.statement`, `http.url`, `messaging.destination`).
-- Sampling strategy MUST be configured externally via `OTEL_TRACES_SAMPLER`. Hardcoding
-  a sampler in application code is FORBIDDEN.
+## Testing Requirements
 
-**OTEL Collector & Pipeline**
+Coverage and test pyramid rules complement the global constitution:
 
-- A shared OTEL Collector MUST be the single egress point for all telemetry signal types
-  (logs, metrics, traces). Services MUST NOT export directly to backend storage
-  (e.g., Prometheus, Jaeger, Loki) — they export only to the Collector.
-- Collector pipeline configuration (receivers, processors, exporters) MUST be version-
-  controlled alongside infrastructure code.
-- The `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SERVICE_NAME`, and
-  `OTEL_DEPLOYMENT_ENVIRONMENT` environment variables MUST be set for every deployed
-  container.
+- **Sapphire UI (TypeScript/React)**: Custom hooks MUST have RTL unit tests. Apollo query
+  components MUST be tested with `MockedProvider`. URL-state-driven components MUST have
+  tests that verify correct behavior across param combinations.
+- **sapphire-bff-api (Node.js)**: All resolvers MUST have tests using mocked backend
+  service clients. DataLoader batching MUST be tested to verify N+1 is eliminated.
+- **Java services**: Domain service classes (e.g., `TemperatureService`,
+  `RecommendationService`) MUST achieve 100% line coverage. Infrastructure classes
+  (controllers, repositories) MUST achieve ≥ 80% line coverage.
+- **Python services (FastAPI)**: All Pydantic model validators and async route handlers
+  MUST have explicit unit tests. Integration tests MUST use `pytest-asyncio` with
+  Testcontainers.
+- **LangGraph agents**: Each graph node MUST be unit-tested in isolation. The compiled
+  graph MUST be tested end-to-end with deterministic LLM stubs.
+
+---
+
+## Architecture Constraints
+
+The following technology choices are fixed for the Sapphire workspace. Deviations require
+a constitution amendment:
+
+| Layer | Fixed Technology |
+|---|---|
+| Frontend | TypeScript, React 18+, Vite, Apollo Client 3 |
+| BFF | Node.js 20+, Apollo Server 4, Express, DataLoader |
+| Java services | Java 17, Spring Boot 3.x, Spring Data JPA, Flyway |
+| Python services | Python 3.11+, FastAPI, Pydantic v2, structlog, ruff |
+| AI agents | LangGraph, Ollama (local), Qdrant (vector store) |
+| Auth | Keycloak OIDC/PKCE — no alternative auth provider |
+| Messaging | Apache Kafka, Avro schemas, Kafka Connect |
+| Workflows | Temporal (durable orchestration) |
+| Observability | OpenTelemetry SDK, shared OTEL Collector |
+| Primary DB | PostgreSQL (TimescaleDB extension for timeseries) |
+| Cache / PubSub | Redis |
 
 ---
 
 ## Governance
 
-This constitution supersedes all other development practices for the Sapphire workspace.
-Every pull request MUST be reviewed for compliance with all four principles.
-Non-compliance that cannot be justified blocks merge.
+This local constitution extends the global constitution at
+`org-constitution/constitution.md`. In case of conflict, the **global constitution takes
+precedence** except where the local rule is explicitly more restrictive — in that case
+the more restrictive rule applies.
 
-**Amendment Procedure**
+**Amendment Procedure** (local additions or changes):
 
-1. Author opens a PR modifying `.specify/memory/constitution.md` with a written rationale.
-2. At least two senior engineers (one per affected service domain) MUST approve.
-3. The version MUST be incremented per the policy below before merge.
-4. A migration note MUST be added to any spec, plan, or task artifact affected by the
-   change within one sprint of ratification.
+1. Author opens a PR modifying `.specify/memory/constitution.md` with written rationale.
+2. At least one `fde` and one `product_owner` MUST approve.
+3. Version MUST be incremented before merge.
+4. The effective constitution MUST be regenerated via `/constitution.resolve` after merge.
 
-**Versioning Policy**
+**Versioning Policy**: follows MAJOR.MINOR.PATCH — same semantics as the global
+constitution.
 
-- **MAJOR** (x.0.0): A principle is removed, fundamentally redefined, or a
-  non-negotiable rule is relaxed.
-- **MINOR** (x.y.0): A new principle or sub-section is added, or materially expanded
-  guidance is introduced.
-- **PATCH** (x.y.z): Clarifications, wording improvements, typo fixes, or non-semantic
-  refinements with no behavioral impact.
-
-**Compliance Review**
-
-- Compliance is evaluated at PR review time by the reviewing engineer.
-- At the start of each sprint, the team lead audits quarantined flaky tests and any
-  unresolved TODO constitution items.
-- Architecture reviews for new microservices MUST use this constitution as the primary
-  evaluation checklist.
-
-**Version**: 2.2.0 | **Ratified**: 2026-03-21 | **Last Amended**: 2026-04-02
+**Version**: 1.1.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-09-07

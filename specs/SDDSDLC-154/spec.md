@@ -68,12 +68,12 @@ A user wants to share their temperature history with their healthcare provider. 
 
 ### Edge Cases
 
-- What happens when a device submits a temperature reading with a timestamp in the future (clock drift)?
-- What if the unit field is missing or contains an unrecognised value — is a default unit assumed, or is the record rejected?
-- What happens when a user has thousands of temperature records and selects the "Month" view — are rollup aggregates pre-computed or computed on demand?
+- **[RESOLVED]** Future-dated timestamps (clock drift): The system MUST reject records with a `timestamp` value greater than the server's current time, returning a structured error response identifying the invalid field. Consistent with out-of-range value rejection (FR-003).
+- **[RESOLVED]** Missing or unrecognised unit field: The system MUST reject records where the `unit` field is absent or contains a value other than `celsius` or `fahrenheit`, returning a structured error response identifying the invalid field. No default unit is assumed.
+- **[RESOLVED]** Rollup computation strategy: Aggregates (daily, weekly, monthly) are pre-computed by a scheduled async job and stored in a rollup table. Chart queries read from pre-computed rollups, not raw records. Maximum rollup staleness is 1 hour.
 - How are temperature readings handled when a user's account is deactivated mid-batch ingestion?
-- What if a device ID referenced in a temperature record is not registered to the submitting user's account?
-- What happens when the chart date range spans a daylight-saving-time boundary — are timestamps normalised to UTC?
+- **[RESOLVED]** Unregistered device ID: The system MUST reject records where the `device_source` identifier is not registered to the authenticated user's account, returning a 403 Forbidden response. Device ownership is enforced at ingestion time.
+- **[RESOLVED]** DST / timezone boundary: All timestamps are stored and queried in UTC. Rollup bucket boundaries are computed in UTC. Conversion to local time for display is the client/UI's responsibility only; the backend has no timezone-awareness beyond UTC.
 
 ---
 
@@ -84,11 +84,13 @@ A user wants to share their temperature history with their healthcare provider. 
 **Ingestion**
 
 - **FR-001**: The system MUST accept body temperature readings submitted individually (one record per request) and in batches (multiple records per request, up to a configurable maximum batch size).
+- **FR-001c**: The system MUST reject any temperature record whose `timestamp` value is greater than the server's current time (future-dated / clock drift). The rejection MUST return a structured error response identifying the invalid field; no partial-batch data from a future-dated record MUST be persisted.
 - **FR-001a**: Ingestion MUST be idempotent on the combination of `(user, device_source, timestamp)`. If a record with the same user, device source, and timestamp already exists, the submission MUST be accepted and return a success response without creating a duplicate record (silent upsert).
 - **FR-001b**: The ingestion endpoint MUST enforce a rate limit of **10 requests per minute per device**. Requests exceeding this limit MUST be rejected with a 429 Too Many Requests response; no partial records from a rate-limited request MUST be persisted.
-- **FR-002**: The system MUST accept temperature values expressed in Celsius or Fahrenheit and store the unit alongside the value.
+- **FR-002**: The system MUST accept temperature values expressed in Celsius or Fahrenheit and store the unit alongside the value. The `unit` field is REQUIRED; records where `unit` is absent or contains a value other than `celsius` or `fahrenheit` MUST be rejected with a structured error response identifying the invalid field. No default unit is assumed.
 - **FR-003**: The system MUST validate each submitted temperature value against a configurable physiological range (minimum and maximum thresholds). The default range is **30–43 °C (86–109.4 °F)**. Records outside this range MUST be rejected with a structured error response identifying the invalid value and the acceptable range.
 - **FR-004**: Each temperature record MUST be associated with: the authenticated user, the submission timestamp (ISO-8601 UTC), the source device identifier, and the ingestion source (device-push or API).
+- **FR-004a**: The system MUST verify that the `device_source` identifier in each submitted record is registered to the authenticated user's account. Records referencing an unregistered or foreign device MUST be rejected with a 403 Forbidden response; no such record MUST be persisted.
 - **FR-005**: If a measurement method is provided in the submission (e.g., oral, axillary, tympanic), the system MUST store it alongside the record. If absent, the field MUST be stored as null.
 - **FR-006**: For batch submissions containing a mix of valid and invalid records, the system MUST store all valid records and return a response listing each rejected record with its reason; the request MUST NOT be treated as all-or-nothing.
 
@@ -101,9 +103,9 @@ A user wants to share their temperature history with their healthcare provider. 
 
 **Storage & Processing**
 
-- **FR-011**: Temperature records MUST be stored with indexing that supports efficient time-series queries (e.g., retrieval of all records for a user within a date range).
+- **FR-011**: Temperature records MUST be stored with indexing that supports efficient time-series queries (e.g., retrieval of all records for a user within a date range). All timestamps MUST be stored and queried in UTC. Rollup bucket boundaries (day, week, month) MUST be computed in UTC. Timezone conversion for display is the client's responsibility.
 - **FR-012**: The system MUST apply the same data retention and archival rules to temperature records as are applied to other health metrics.
-- **FR-013**: The system MUST produce pre-aggregated rollups — daily, weekly, and monthly — for each user's temperature data, including: minimum value, maximum value, and average value per period.
+- **FR-013**: The system MUST produce pre-aggregated rollups — daily, weekly, and monthly — for each user's temperature data, including: minimum value, maximum value, and average value per period. Rollups MUST be computed by a scheduled asynchronous job (not on-demand at query time) and stored in a dedicated rollup table. Chart and reporting queries MUST read from the pre-computed rollup table. Maximum acceptable rollup staleness is **1 hour**.
 
 **Reporting & Analytics**
 
@@ -156,6 +158,11 @@ A user wants to share their temperature history with their healthcare provider. 
 ### Session 2026-08-20
 
 - Q: How does the system handle duplicate records (same user, device, timestamp, and value submitted twice)? → A: Idempotent upsert — deduplicate silently on `(user, device_source, timestamp)`; return success without creating a duplicate.
+- Q: What happens when a device submits a timestamp in the future (clock drift)? → A: Reject with a structured error response identifying the invalid field; consistent with out-of-range value rejection (FR-003). Encoded as FR-001c.
+- Q: What if the unit field is missing or contains an unrecognised value? → A: Reject with a structured error; no default unit assumed. Valid values are `celsius` and `fahrenheit` only. Encoded in FR-002.
+- Q: What if a device ID is not registered to the submitting user's account? → A: Reject with 403 Forbidden; device ownership enforced at ingestion time. Encoded as FR-004a.
+- Q: Are rollup aggregates pre-computed or on-demand? → A: Pre-computed by scheduled async job; chart reads from rollup table; max staleness 1 hour. Encoded in FR-013.
+- Q: How are timestamps handled across DST boundaries? → A: All timestamps stored and queried in UTC; rollup buckets computed in UTC; client/UI handles local display conversion. Encoded in FR-011.
 - Q: What are the default physiological validation thresholds for temperature? → A: 30–43 °C / 86–109.4 °F (clinically grounded survivable bounds; configurable).
 - Q: What is the ingestion rate limit per device? → A: 10 requests/minute per device; excess requests rejected with 429.
 - Q: What is the compliance posture for body temperature health data? → A: Deferred — compliance obligations (encryption at rest, audit logging, retention schedules, HIPAA/GDPR) are out of scope for this story and will be addressed in a dedicated security/compliance story.

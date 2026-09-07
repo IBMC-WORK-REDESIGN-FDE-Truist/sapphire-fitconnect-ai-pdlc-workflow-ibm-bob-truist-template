@@ -1,0 +1,11 @@
+# Caffeine dependency addition for sapphire-health-service
+# Add to sapphire-health-service/pom.xml inside <dependencies>:
+#
+# <dependency>
+#     <groupId>com.github.ben-manes.caffeine</groupId>
+#     <artifactId>caffeine</artifactId>
+#     <!-- version managed by Spring Boot BOM -->
+# </dependency>
+#
+# Spring Boot 3.x BOM manages the Caffeine version (currently 3.1.x).
+# No explicit version declaration needed when using spring-boot-starter-parent.
